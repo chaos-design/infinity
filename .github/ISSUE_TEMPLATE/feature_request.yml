@@ -1,0 +1,71 @@
+name: Feature Request
+description: Suggest a new capability or improvement for Infinity.
+title: '[Feature]: '
+labels: ['enhancement', 'needs triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing an idea. Please focus on the user problem, desired outcome, and expected workflow.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+      description: What problem are you trying to solve?
+      placeholder: Describe the workflow friction, missing capability, or user need.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should Infinity do differently?
+      placeholder: Describe the expected behavior, UI changes, or settings.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Feature area
+      options:
+        - Search
+        - Shortcuts
+        - Appearance
+        - Open Tabs
+        - Tags
+        - Settings
+        - Browser extension packaging
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Have you tried another workflow or design?
+      placeholder: Describe alternatives or why existing behavior is not enough.
+    validations:
+      required: false
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Add screenshots, sketches, links, or examples from similar products.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and did not find a duplicate.
+          required: true
+        - label: This request is specific to Infinity and not a general browser support question.
+          required: true

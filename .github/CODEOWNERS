@@ -1,0 +1,10 @@
+# CODEOWNERS
+#
+# Add concrete GitHub users or teams when the maintainer group is finalized.
+# Examples:
+# * @chaos-design/infinity-maintainers
+# /components/ @chaos-design/frontend-maintainers
+# /.github/ @chaos-design/release-maintainers
+#
+# Keeping this file in place documents the intended ownership model without
+# assigning invalid or unavailable owners.

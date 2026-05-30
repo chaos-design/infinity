@@ -1,0 +1,91 @@
+name: Bug Report
+description: Report a reproducible problem in Infinity.
+title: '[Bug]: '
+labels: ['bug', 'needs triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Infinity. Please provide enough detail for maintainers to reproduce the problem.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Problem summary
+      description: What happened? What did you expect to happen instead?
+      placeholder: Describe the visible problem and expected behavior.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: List the exact steps that trigger the problem.
+      placeholder: |
+        1. Open a new tab
+        2. Click ...
+        3. See ...
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Infinity version
+      description: Use the release tag, package version, or commit hash if available.
+      placeholder: v0.0.1
+    validations:
+      required: false
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      options:
+        - Chrome
+        - Edge
+        - Brave
+        - Other Chromium browser
+        - Firefox
+    validations:
+      required: true
+
+  - type: input
+    id: browser-version
+    attributes:
+      label: Browser version
+      placeholder: Chrome 126.0.0.0
+    validations:
+      required: false
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Operating system
+      options:
+        - macOS
+        - Windows
+        - Linux
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console output or screenshots
+      description: Add relevant console errors, screenshots, screen recordings, or logs.
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and did not find a duplicate.
+          required: true
+        - label: I can reproduce this issue with the latest available version or current main branch.
+          required: true
