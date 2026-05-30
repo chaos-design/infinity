@@ -47,20 +47,20 @@
     "tailwindcss": "^3.4.19"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.15",
+    "@biomejs/biome": "^2.4.16",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/chrome": "^0.1.42",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/styled-components": "^5.1.36",
-    "@vitejs/plugin-react": "^4.2.1",
-    "@vitest/coverage-v8": "^1.6.1",
+    "@vitejs/plugin-react": "^6.0.2",
+    "@vitest/coverage-v8": "^4.1.7",
     "jsdom": "^22.1.0",
     "sharp": "^0.34.5",
-    "typescript": "^5.9.3",
-    "vite": "^5.4.11",
-    "vitest": "^1.6.1",
-    "wxt": "^0.18.15"
+    "typescript": "^6.0.3",
+    "vite": "^8.0.14",
+    "vitest": "^4.1.7",
+    "wxt": "^0.20.26"
   }
 }
