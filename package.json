@@ -2,7 +2,7 @@
   "name": "@chaos-design/infinity",
   "description": "Infinity Chrome Extension",
   "private": true,
-  "version": "0.0.2",
+  "version": "0.0.3",
   "homepage": "https://github.com/chaos-design/infinity#readme",
   "repository": {
     "type": "git",
@@ -19,6 +19,7 @@
     "build:firefox": "wxt build -b firefox",
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
+    "release:auto": "node scripts/release.mjs",
     "compile": "tsc --noEmit",
     "format": "biome format --write .",
     "lint": "biome check .",
