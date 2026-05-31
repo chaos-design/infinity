@@ -86,10 +86,3 @@ jobs:
           files: release-assets/*.zip
           fail_on_unmatched_files: true
           generate_release_notes: true
-
-      - name: Upload extension build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: infinity-${{ steps.release.outputs.package_version }}-chrome-mv3
-          path: .output/chrome-mv3
-          if-no-files-found: error
