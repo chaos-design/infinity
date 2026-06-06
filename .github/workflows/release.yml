@@ -26,7 +26,7 @@ jobs:
           corepack prepare pnpm@latest --activate
 
       - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Build Extension ZIPs
         run: |
