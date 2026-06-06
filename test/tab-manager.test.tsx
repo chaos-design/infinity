@@ -538,6 +538,209 @@ describe('TabManager', () => {
     expect(mockCloseTab).toHaveBeenCalledWith(1);
   });
 
+  it('should scroll inside the domain card before forwarding to the page', () => {
+    (useTabs as Mock).mockReturnValue({
+      loading: false,
+      tabGroups: [
+        {
+          domain: 'scroll.com',
+          tabs: [
+            { id: 1, windowId: 1, title: 'Tab A', url: 'https://scroll.com/a' },
+            { id: 2, windowId: 1, title: 'Tab B', url: 'https://scroll.com/b' },
+          ],
+        },
+      ],
+      closeTab: vi.fn(),
+      closeGroup: vi.fn(),
+      switchToTab: vi.fn(),
+    });
+
+    const rootDiv = document.createElement('div');
+    rootDiv.id = 'newtab-scroll-root';
+    const rootScrollByMock = vi.fn();
+    rootDiv.scrollBy = rootScrollByMock;
+    document.body.appendChild(rootDiv);
+
+    render(<TabManager />);
+
+    let animationFrameCallback: FrameRequestCallback | null = null;
+    const requestAnimationFrameSpy = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((cb) => {
+        animationFrameCallback = cb;
+        return 1;
+      });
+
+    const cardList = screen.getByTestId('domain-card-tab-list');
+    const cardScrollByMock = vi.fn();
+    cardList.scrollBy = cardScrollByMock;
+
+    Object.defineProperty(cardList, 'scrollHeight', {
+      configurable: true,
+      value: 1000,
+    });
+    Object.defineProperty(cardList, 'clientHeight', {
+      configurable: true,
+      value: 500,
+    });
+    Object.defineProperty(cardList, 'scrollTop', {
+      configurable: true,
+      value: 250,
+    });
+
+    fireEvent.wheel(cardList, { deltaY: 100 });
+    (animationFrameCallback as unknown as FrameRequestCallback)(0);
+
+    expect(cardScrollByMock).toHaveBeenCalledWith({
+      top: 15.12,
+      behavior: 'auto',
+    });
+    expect(rootScrollByMock).not.toHaveBeenCalled();
+
+    requestAnimationFrameSpy.mockRestore();
+    document.body.removeChild(rootDiv);
+  });
+
+  it('should forward domain card wheel to the next page after enough bottom intent', () => {
+    (useTabs as Mock).mockReturnValue({
+      loading: false,
+      tabGroups: [
+        {
+          domain: 'bottom.com',
+          tabs: [
+            { id: 1, windowId: 1, title: 'Tab A', url: 'https://bottom.com/a' },
+            { id: 2, windowId: 1, title: 'Tab B', url: 'https://bottom.com/b' },
+          ],
+        },
+      ],
+      closeTab: vi.fn(),
+      closeGroup: vi.fn(),
+      switchToTab: vi.fn(),
+    });
+
+    const rootDiv = document.createElement('div');
+    rootDiv.id = 'newtab-scroll-root';
+    const rootScrollByMock = vi.fn();
+    rootDiv.scrollBy = rootScrollByMock;
+    document.body.appendChild(rootDiv);
+
+    render(<TabManager />);
+
+    let animationFrameCallback: FrameRequestCallback | null = null;
+    const requestAnimationFrameSpy = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((cb) => {
+        animationFrameCallback = cb;
+        return 1;
+      });
+
+    const cardList = screen.getByTestId('domain-card-tab-list');
+    const cardScrollByMock = vi.fn();
+    cardList.scrollBy = cardScrollByMock;
+
+    Object.defineProperty(cardList, 'scrollHeight', {
+      configurable: true,
+      value: 1000,
+    });
+    Object.defineProperty(cardList, 'clientHeight', {
+      configurable: true,
+      value: 500,
+    });
+    Object.defineProperty(cardList, 'scrollTop', {
+      configurable: true,
+      value: 500,
+    });
+
+    fireEvent.wheel(cardList, { deltaY: 100 });
+    fireEvent.wheel(cardList, { deltaY: 100 });
+    fireEvent.wheel(cardList, { deltaY: 100 });
+    fireEvent.wheel(cardList, { deltaY: 100 });
+    expect(animationFrameCallback).toBeNull();
+    expect(rootScrollByMock).not.toHaveBeenCalled();
+
+    fireEvent.wheel(cardList, { deltaY: 100 });
+    (animationFrameCallback as unknown as FrameRequestCallback)(0);
+
+    expect(rootScrollByMock).toHaveBeenCalledWith({
+      top: 10.8,
+      behavior: 'auto',
+    });
+    expect(cardScrollByMock).not.toHaveBeenCalled();
+
+    requestAnimationFrameSpy.mockRestore();
+    document.body.removeChild(rootDiv);
+  });
+
+  it('should forward domain card wheel to the previous page after enough top intent', () => {
+    (useTabs as Mock).mockReturnValue({
+      loading: false,
+      tabGroups: [
+        {
+          domain: 'top.com',
+          tabs: [
+            { id: 1, windowId: 1, title: 'Tab A', url: 'https://top.com/a' },
+            { id: 2, windowId: 1, title: 'Tab B', url: 'https://top.com/b' },
+          ],
+        },
+      ],
+      closeTab: vi.fn(),
+      closeGroup: vi.fn(),
+      switchToTab: vi.fn(),
+    });
+
+    const rootDiv = document.createElement('div');
+    rootDiv.id = 'newtab-scroll-root';
+    const rootScrollByMock = vi.fn();
+    rootDiv.scrollBy = rootScrollByMock;
+    document.body.appendChild(rootDiv);
+
+    render(<TabManager />);
+
+    let animationFrameCallback: FrameRequestCallback | null = null;
+    const requestAnimationFrameSpy = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((cb) => {
+        animationFrameCallback = cb;
+        return 1;
+      });
+
+    const cardList = screen.getByTestId('domain-card-tab-list');
+    const cardScrollByMock = vi.fn();
+    cardList.scrollBy = cardScrollByMock;
+
+    Object.defineProperty(cardList, 'scrollHeight', {
+      configurable: true,
+      value: 1000,
+    });
+    Object.defineProperty(cardList, 'clientHeight', {
+      configurable: true,
+      value: 500,
+    });
+    Object.defineProperty(cardList, 'scrollTop', {
+      configurable: true,
+      value: 0,
+    });
+
+    fireEvent.wheel(cardList, { deltaY: -100 });
+    fireEvent.wheel(cardList, { deltaY: -100 });
+    fireEvent.wheel(cardList, { deltaY: -100 });
+    fireEvent.wheel(cardList, { deltaY: -100 });
+    expect(animationFrameCallback).toBeNull();
+    expect(rootScrollByMock).not.toHaveBeenCalled();
+
+    fireEvent.wheel(cardList, { deltaY: -100 });
+    (animationFrameCallback as unknown as FrameRequestCallback)(0);
+
+    expect(rootScrollByMock).toHaveBeenCalledWith({
+      top: -10.8,
+      behavior: 'auto',
+    });
+    expect(cardScrollByMock).not.toHaveBeenCalled();
+
+    requestAnimationFrameSpy.mockRestore();
+    document.body.removeChild(rootDiv);
+  });
+
   it('should batch add a tag only to manually checked domains in the current result', () => {
     const mockAddDomainTagToMany = vi.fn();
 

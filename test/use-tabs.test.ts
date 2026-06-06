@@ -4,6 +4,7 @@ import { useTabs } from '../hooks/use-tabs';
 
 describe('useTabs', () => {
   beforeEach(() => {
+    vi.useRealTimers();
     vi.clearAllMocks();
   });
 
@@ -46,7 +47,7 @@ describe('useTabs', () => {
     expect(result.current.loading).toBe(false);
     expect(result.current.tabGroups).toHaveLength(2);
 
-    // Ordered by count descending
+    // Ordered by domain ascending
     expect(result.current.tabGroups[0].domain).toBe('example.com');
     expect(result.current.tabGroups[0].tabs).toHaveLength(2);
     expect(result.current.tabGroups[1].domain).toBe('test.com');
@@ -116,7 +117,7 @@ describe('useTabs', () => {
 
   it('should handle errors in fetchTabs gracefully (negative case)', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    (global.chrome.tabs.query as any).mockRejectedValue(
+    (global.chrome.tabs.query as any).mockRejectedValueOnce(
       new Error('Query failed'),
     );
 
@@ -234,8 +235,14 @@ describe('useTabs', () => {
     consoleSpy.mockRestore();
   });
 
-  it('should refetch on chrome events', async () => {
-    const { result } = renderHook(() => useTabs());
+  it('should coalesce chrome event bursts into one refetch', async () => {
+    vi.useFakeTimers();
+    (global.chrome.tabs.query as any).mockResolvedValue([]);
+    renderHook(() => useTabs());
+
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
 
     // Clear initial fetch count
     (global.chrome.tabs.query as any).mockClear();
@@ -248,12 +255,46 @@ describe('useTabs', () => {
     const onCreated = (global.chrome.tabs.onCreated.addListener as any).mock
       .calls[0][0];
 
-    await act(async () => {
+    act(() => {
       onUpdated();
       onRemoved();
       onCreated();
     });
 
-    expect(global.chrome.tabs.query).toHaveBeenCalledTimes(3);
+    expect(global.chrome.tabs.query).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(50);
+    });
+
+    expect(global.chrome.tabs.query).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
+  it('should keep the current tab group reference when fetched data is unchanged', async () => {
+    const mockTabs = [
+      {
+        id: 1,
+        windowId: 1,
+        url: 'https://example.com/page1',
+        title: 'Example 1',
+        active: false,
+      },
+    ];
+    (global.chrome.tabs.query as any).mockResolvedValue(mockTabs);
+
+    const { result } = renderHook(() => useTabs());
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    const currentGroups = result.current.tabGroups;
+
+    await act(async () => {
+      await result.current.refreshTabs();
+    });
+
+    expect(result.current.tabGroups).toBe(currentGroups);
   });
 });

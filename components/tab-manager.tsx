@@ -499,6 +499,11 @@ export function TabManager({
     const container = event.currentTarget;
     const canScroll = container.scrollHeight > container.clientHeight + 1;
     const root = document.getElementById('newtab-scroll-root');
+    const isCardScroll = dampingTarget === 'card';
+
+    if (isCardScroll) {
+      event.stopPropagation();
+    }
 
     if (!canScroll) {
       if (scrollThroughNestedPanels && root) {
@@ -516,6 +521,15 @@ export function TabManager({
     const isAtBottom =
       container.scrollTop + container.clientHeight >=
       container.scrollHeight - 1;
+    const canScrollInside =
+      (event.deltaY < 0 && !isAtTop) || (event.deltaY > 0 && !isAtBottom);
+
+    if (isCardScroll && canScrollInside) {
+      resetPageSwitchIntent();
+      applyDampedScroll(container, event.deltaY, dampingTarget);
+      event.preventDefault();
+      return;
+    }
 
     if ((isAtTop && event.deltaY < 0) || (isAtBottom && event.deltaY > 0)) {
       if (scrollThroughNestedPanels && root) {
@@ -1146,6 +1160,7 @@ export function TabManager({
                               </div>
 
                               <div
+                                data-testid="domain-card-tab-list"
                                 className="max-h-[260px] space-y-1.5 overflow-y-auto pr-1 custom-scrollbar"
                                 onWheel={(e) => forwardWheelToPage(e, 'card')}
                               >
@@ -1374,6 +1389,7 @@ export function TabManager({
                           </div>
 
                           <div
+                            data-testid="domain-card-tab-list"
                             className="max-h-[380px] space-y-1.5 overflow-y-auto pr-1 custom-scrollbar"
                             onWheel={(e) => forwardWheelToPage(e, 'card')}
                           >

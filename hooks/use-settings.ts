@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export interface Shortcut {
   id: string;
@@ -169,6 +169,10 @@ function normalizeSettings(value: Partial<Settings> | undefined): Settings {
   };
 }
 
+function areSettingsEqual(left: Settings, right: Settings): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
 export function useSettings() {
   const [settings, setSettings] = useState<Settings>(() => {
     if (typeof chrome === 'undefined' || !chrome.storage) {
@@ -186,6 +190,19 @@ export function useSettings() {
   const [loading, setLoading] = useState(
     () => typeof chrome !== 'undefined' && !!chrome.storage,
   );
+  const settingsRef = useRef(settings);
+
+  const applySettings = useCallback((nextSettings: Settings) => {
+    setSettings((currentSettings) => {
+      if (areSettingsEqual(currentSettings, nextSettings)) {
+        settingsRef.current = currentSettings;
+        return currentSettings;
+      }
+
+      settingsRef.current = nextSettings;
+      return nextSettings;
+    });
+  }, []);
 
   useEffect(() => {
     if (typeof chrome === 'undefined' || !chrome.storage) {
@@ -195,7 +212,7 @@ export function useSettings() {
     // Load initial settings
     chrome.storage.local.get(['newtab_settings'], (result) => {
       if (result.newtab_settings) {
-        setSettings(
+        applySettings(
           normalizeSettings(result.newtab_settings as Partial<Settings>),
         );
       }
@@ -211,31 +228,37 @@ export function useSettings() {
         const nextSettings =
           (changes.newtab_settings.newValue as Partial<Settings> | undefined) ??
           {};
-        setSettings(normalizeSettings(nextSettings));
+        applySettings(normalizeSettings(nextSettings));
       }
     };
 
     chrome.storage.onChanged.addListener(listener);
     return () => chrome.storage.onChanged.removeListener(listener);
-  }, []);
+  }, [applySettings]);
 
-  const updateSettings = useCallback(
-    (newSettings: Partial<Settings>) => {
-      const updated = normalizeSettings({ ...settings, ...newSettings });
-      setSettings(updated);
+  const updateSettings = useCallback((newSettings: Partial<Settings>) => {
+    const updated = normalizeSettings({
+      ...settingsRef.current,
+      ...newSettings,
+    });
 
-      if (typeof chrome !== 'undefined' && chrome.storage) {
-        chrome.storage.local.set({ newtab_settings: updated });
-      } else {
-        try {
-          localStorage.setItem('newtab_settings', JSON.stringify(updated));
-        } catch {
-          // ignore
-        }
+    if (areSettingsEqual(settingsRef.current, updated)) {
+      return;
+    }
+
+    settingsRef.current = updated;
+    setSettings(updated);
+
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+      chrome.storage.local.set({ newtab_settings: updated });
+    } else {
+      try {
+        localStorage.setItem('newtab_settings', JSON.stringify(updated));
+      } catch {
+        // ignore
       }
-    },
-    [settings],
-  );
+    }
+  }, []);
 
   return { settings, updateSettings, loading };
 }

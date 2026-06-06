@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export interface TabInfo {
   id: number;
@@ -15,95 +15,157 @@ export interface TabGroup {
   tags: string[];
 }
 
+const tabsRefreshDelayMs = 50;
+
+function getTabDomain(urlValue: string): string {
+  try {
+    const url = new URL(urlValue);
+    if (url.protocol === 'chrome:') {
+      return 'chrome';
+    }
+    if (url.protocol === 'edge:') {
+      return 'edge';
+    }
+    return url.hostname;
+  } catch (_error) {
+    return 'other';
+  }
+}
+
+function buildTabGroups(tabs: chrome.tabs.Tab[]): TabGroup[] {
+  const groupsMap = new Map<string, TabInfo[]>();
+
+  for (const tab of tabs) {
+    if (!tab.id || !tab.url) continue;
+
+    const domain = getTabDomain(tab.url);
+    const tabInfo: TabInfo = {
+      id: tab.id,
+      windowId: tab.windowId,
+      url: tab.url,
+      title: tab.title || tab.url,
+      favIconUrl: tab.favIconUrl,
+      active: tab.active,
+    };
+
+    if (!groupsMap.has(domain)) {
+      groupsMap.set(domain, []);
+    }
+    groupsMap.get(domain)!.push(tabInfo);
+  }
+
+  const groups: TabGroup[] = Array.from(groupsMap.entries()).map(
+    ([domain, tabs]) => ({
+      domain,
+      tabs,
+      tags: [],
+    }),
+  );
+
+  groups.sort((a, b) => a.domain.localeCompare(b.domain));
+  return groups;
+}
+
+function areTabGroupsEqual(left: TabGroup[], right: TabGroup[]): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((leftGroup, groupIndex) => {
+    const rightGroup = right[groupIndex];
+    if (
+      leftGroup.domain !== rightGroup.domain ||
+      leftGroup.tabs.length !== rightGroup.tabs.length
+    ) {
+      return false;
+    }
+
+    return leftGroup.tabs.every((leftTab, tabIndex) => {
+      const rightTab = rightGroup.tabs[tabIndex];
+      return (
+        leftTab.id === rightTab.id &&
+        leftTab.windowId === rightTab.windowId &&
+        leftTab.url === rightTab.url &&
+        leftTab.title === rightTab.title &&
+        leftTab.favIconUrl === rightTab.favIconUrl &&
+        leftTab.active === rightTab.active
+      );
+    });
+  });
+}
+
 export function useTabs() {
   const [tabGroups, setTabGroups] = useState<TabGroup[]>([]);
   const [loading, setLoading] = useState(true);
+  const isMountedRef = useRef(false);
+  const isFetchingRef = useRef(false);
+  const needsRefreshRef = useRef(false);
+  const refreshTimerRef = useRef<number | null>(null);
 
   const fetchTabs = useCallback(async () => {
+    if (isFetchingRef.current) {
+      needsRefreshRef.current = true;
+      return;
+    }
+
+    isFetchingRef.current = true;
+
     try {
-      const tabs = await chrome.tabs.query({});
+      do {
+        needsRefreshRef.current = false;
+        const groups = buildTabGroups(await chrome.tabs.query({}));
 
-      const groupsMap = new Map<string, TabInfo[]>();
-
-      for (const tab of tabs) {
-        if (!tab.id || !tab.url) continue;
-
-        // Skip extension pages and new tab pages if desired, but user might want to see them.
-        // Let's filter out chrome:// and edge:// maybe? Or just keep all.
-        // To group by domain:
-        let domain = 'other';
-        try {
-          const url = new URL(tab.url);
-          if (url.protocol === 'chrome:') {
-            domain = 'chrome';
-          } else if (url.protocol === 'edge:') {
-            domain = 'edge';
-          } else {
-            domain = url.hostname;
-          }
-        } catch (_e) {
-          // Invalid URL
-          domain = 'other';
+        if (!isMountedRef.current) {
+          return;
         }
 
-        const tabInfo: TabInfo = {
-          id: tab.id,
-          windowId: tab.windowId,
-          url: tab.url,
-          title: tab.title || tab.url,
-          favIconUrl: tab.favIconUrl,
-          active: tab.active,
-        };
-
-        if (!groupsMap.has(domain)) {
-          groupsMap.set(domain, []);
-        }
-        groupsMap.get(domain)!.push(tabInfo);
-      }
-
-      const groups: TabGroup[] = Array.from(groupsMap.entries()).map(
-        ([domain, tabs]) => ({
-          domain,
-          tabs,
-          tags: [],
-        }),
-      );
-
-      // Sort groups by number of tabs (descending)
-      groups.sort((a, b) => b.tabs.length - a.tabs.length);
-
-      setTabGroups(groups);
+        setTabGroups((currentGroups) =>
+          areTabGroupsEqual(currentGroups, groups) ? currentGroups : groups,
+        );
+      } while (needsRefreshRef.current && isMountedRef.current);
     } catch (error) {
       console.error('Failed to fetch tabs:', error);
     } finally {
-      setLoading(false);
+      isFetchingRef.current = false;
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
+  const scheduleFetchTabs = useCallback(() => {
+    if (refreshTimerRef.current !== null) {
+      return;
+    }
+
+    refreshTimerRef.current = window.setTimeout(() => {
+      refreshTimerRef.current = null;
+      void fetchTabs();
+    }, tabsRefreshDelayMs);
+  }, [fetchTabs]);
+
   useEffect(() => {
-    fetchTabs();
+    isMountedRef.current = true;
+    void fetchTabs();
 
-    // Listen to tab changes
-    const handleTabUpdated = () => {
-      fetchTabs();
-    };
-    const handleTabRemoved = () => {
-      fetchTabs();
-    };
-    const handleTabCreated = () => {
-      fetchTabs();
+    const handleTabChanged = () => {
+      scheduleFetchTabs();
     };
 
-    chrome.tabs.onUpdated.addListener(handleTabUpdated);
-    chrome.tabs.onRemoved.addListener(handleTabRemoved);
-    chrome.tabs.onCreated.addListener(handleTabCreated);
+    chrome.tabs.onUpdated.addListener(handleTabChanged);
+    chrome.tabs.onRemoved.addListener(handleTabChanged);
+    chrome.tabs.onCreated.addListener(handleTabChanged);
 
     return () => {
-      chrome.tabs.onUpdated.removeListener(handleTabUpdated);
-      chrome.tabs.onRemoved.removeListener(handleTabRemoved);
-      chrome.tabs.onCreated.removeListener(handleTabCreated);
+      isMountedRef.current = false;
+      if (refreshTimerRef.current !== null) {
+        window.clearTimeout(refreshTimerRef.current);
+      }
+      chrome.tabs.onUpdated.removeListener(handleTabChanged);
+      chrome.tabs.onRemoved.removeListener(handleTabChanged);
+      chrome.tabs.onCreated.removeListener(handleTabChanged);
     };
-  }, [fetchTabs]);
+  }, [fetchTabs, scheduleFetchTabs]);
 
   const closeTab = async (tabId: number) => {
     try {

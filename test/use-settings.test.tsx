@@ -70,4 +70,57 @@ describe('useSettings tabs view mode', () => {
       }),
     );
   });
+
+  it('does not persist when settings are unchanged', async () => {
+    (chrome.storage.local.get as Mock).mockImplementation(
+      (_keys: unknown, callback: (value: unknown) => void) => {
+        callback({
+          newtab_settings: {
+            tabsViewMode: 'domain',
+          },
+        });
+      },
+    );
+
+    const { result } = renderHook(() => useSettings());
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => {
+      result.current.updateSettings({ tabsViewMode: 'domain' });
+    });
+
+    expect(chrome.storage.local.set).not.toHaveBeenCalled();
+  });
+
+  it('keeps the same settings reference for duplicate storage broadcasts', async () => {
+    (chrome.storage.local.get as Mock).mockImplementation(
+      (_keys: unknown, callback: (value: unknown) => void) => {
+        callback({
+          newtab_settings: {
+            tabsViewMode: 'domain',
+          },
+        });
+      },
+    );
+
+    const { result } = renderHook(() => useSettings());
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    const currentSettings = result.current.settings;
+    const listener = (chrome.storage.onChanged.addListener as Mock).mock
+      .calls[0][0];
+
+    act(() => {
+      listener(
+        {
+          newtab_settings: {
+            newValue: currentSettings,
+          },
+        },
+        'local',
+      );
+    });
+
+    expect(result.current.settings).toBe(currentSettings);
+  });
 });
