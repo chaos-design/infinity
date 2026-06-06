@@ -13,9 +13,10 @@
 
 ## 验证结果
 
-- [ ] 已运行 `npm run lint`
-- [ ] 已运行 `npm run compile`
-- [ ] 已运行 `npm run build` 或 `npm run zip`
+- [ ] 已使用 Node.js 22.12+ 和 pnpm
+- [ ] 已运行 `pnpm lint`
+- [ ] 已运行 `pnpm compile`
+- [ ] 已运行 `pnpm build` 或 `pnpm zip`
 - [ ] 已补充或更新必要测试
 - [ ] 已在 Chrome / Chromium 中完成手动验证
 

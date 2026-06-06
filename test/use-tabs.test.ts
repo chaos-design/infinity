@@ -297,4 +297,150 @@ describe('useTabs', () => {
 
     expect(result.current.tabGroups).toBe(currentGroups);
   });
+
+  it('should update tab groups when refreshed data changes', async () => {
+    (global.chrome.tabs.query as any)
+      .mockResolvedValueOnce([
+        {
+          id: 1,
+          windowId: 1,
+          url: 'https://example.com/page1',
+          title: 'Example 1',
+          active: false,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 2,
+          windowId: 1,
+          url: 'https://changed.com/page1',
+          title: 'Changed',
+          active: true,
+        },
+      ]);
+
+    const { result } = renderHook(() => useTabs());
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    await act(async () => {
+      await result.current.refreshTabs();
+    });
+
+    expect(result.current.tabGroups[0].domain).toBe('changed.com');
+  });
+
+  it('should queue a refresh when a fetch is already running', async () => {
+    let resolveFirstQuery: (tabs: unknown[]) => void = () => {};
+    (global.chrome.tabs.query as any)
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveFirstQuery = resolve;
+        }),
+      )
+      .mockResolvedValueOnce([
+        {
+          id: 2,
+          windowId: 1,
+          url: 'https://queued.com/page1',
+          title: 'Queued',
+          active: false,
+        },
+      ]);
+
+    const { result } = renderHook(() => useTabs());
+
+    act(() => {
+      void result.current.refreshTabs();
+    });
+
+    await act(async () => {
+      resolveFirstQuery([
+        {
+          id: 1,
+          windowId: 1,
+          url: 'https://initial.com/page1',
+          title: 'Initial',
+          active: false,
+        },
+      ]);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(global.chrome.tabs.query).toHaveBeenCalledTimes(2);
+    expect(result.current.tabGroups[0].domain).toBe('queued.com');
+  });
+
+  it('should avoid setting state after unmount while a fetch is pending', async () => {
+    let resolveQuery: (tabs: unknown[]) => void = () => {};
+    (global.chrome.tabs.query as any).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveQuery = resolve;
+      }),
+    );
+
+    const { result, unmount } = renderHook(() => useTabs());
+
+    expect(result.current.loading).toBe(true);
+    unmount();
+
+    await act(async () => {
+      resolveQuery([
+        {
+          id: 1,
+          windowId: 1,
+          url: 'https://late.com/page1',
+          title: 'Late',
+          active: false,
+        },
+      ]);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(global.chrome.tabs.query).toHaveBeenCalledTimes(1);
+  });
+
+  it('should clear a scheduled refresh on unmount', async () => {
+    vi.useFakeTimers();
+    (global.chrome.tabs.query as any).mockResolvedValue([]);
+    const clearTimeoutSpy = vi.spyOn(window, 'clearTimeout');
+
+    const { unmount } = renderHook(() => useTabs());
+
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+
+    const onUpdated = (global.chrome.tabs.onUpdated.addListener as any).mock
+      .calls[0][0];
+
+    act(() => {
+      onUpdated();
+    });
+    unmount();
+
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+    clearTimeoutSpy.mockRestore();
+    vi.useRealTimers();
+  });
+
+  it('should ignore closeGroup calls for unknown domains', async () => {
+    (global.chrome.tabs.query as any).mockResolvedValue([
+      { id: 1, windowId: 1, url: 'https://example.com/page1' },
+    ]);
+
+    const { result } = renderHook(() => useTabs());
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    await act(async () => {
+      await result.current.closeGroup('missing.com');
+    });
+
+    expect(global.chrome.tabs.remove).not.toHaveBeenCalled();
+  });
 });

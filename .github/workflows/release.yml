@@ -18,17 +18,22 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm' # Change to 'pnpm' or 'yarn' if needed
+          node-version: 22
+          cache: pnpm
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
 
       - name: Install Dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Build Extension ZIPs
         run: |
-          npx wxt zip
-          npx wxt zip -b firefox
-          npx wxt zip -b edge
+          pnpm exec wxt zip
+          pnpm exec wxt zip -b firefox
+          pnpm exec wxt zip -b edge
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

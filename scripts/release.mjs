@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -111,10 +111,14 @@ const nextTag = `v${nextVersion}`;
 console.log(`Preparing ${nextTag}`);
 
 if (packageJson.version !== nextVersion) {
-  run('npm', ['version', nextVersion, '--no-git-tag-version'], { stdio: 'inherit' });
+  packageJson.version = nextVersion;
+  writeFileSync(
+    resolve(rootDir, 'package.json'),
+    `${JSON.stringify(packageJson, null, 2)}\n`,
+  );
 }
 
-run('git', ['add', 'package.json', 'package-lock.json', '.github/workflows/release.yml', 'scripts/release.mjs'], {
+run('git', ['add', 'package.json', 'pnpm-lock.yaml', '.github/workflows/release.yml', 'scripts/release.mjs'], {
   stdio: 'inherit',
 });
 

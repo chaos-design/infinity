@@ -23,10 +23,11 @@ The Release workflow validates that the tag version matches `package.json`.
 - Update `CHANGELOG.md` with user-facing changes.
 - Confirm `README.md` screenshots and feature descriptions are current.
 - Review `PRIVACY.md` when permissions, data handling, or network behavior changes.
-- Run `npm run lint`.
-- Run `npm run compile`.
-- Run `npm run build`.
-- Run `npm run zip`.
+- Use Node.js 22.12+ and pnpm.
+- Run `pnpm lint`.
+- Run `pnpm compile`.
+- Run `pnpm build`.
+- Run `pnpm zip`.
 - Load `.output/chrome-mv3` in Chrome and verify the New Tab page manually.
 - Check that `.output/*.zip` is generated and installable.
 

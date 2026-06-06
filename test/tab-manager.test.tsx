@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { createEvent, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { TabManager } from '../components/tab-manager';
 import { useTabs } from '../hooks/use-tabs';
@@ -1940,5 +1940,582 @@ describe('TabManager', () => {
 
     fireEvent.dragEnd(draggedCard as HTMLElement);
     expect(draggedCard).not.toHaveClass('opacity-60');
+  });
+
+  it('should clear individual search chips and close the search popover on outside click', () => {
+    (useTags as Mock).mockReturnValue({
+      tagsMap: {},
+      domainTagsMap: {
+        'test.com': [createDomainTag('focus', 'Focus', 'BookOpen')],
+        'other.com': [createDomainTag('work', 'Work', 'BriefcaseBusiness')],
+      },
+      addTag: vi.fn(),
+      removeTag: vi.fn(),
+      addDomainTag: vi.fn(),
+      removeDomainTag: vi.fn(),
+      updateDomainTag: vi.fn(),
+      addDomainTagToMany: vi.fn(),
+      allUniqueTags: ['Focus', 'Work'],
+    });
+    (useTabs as Mock).mockReturnValue({
+      loading: false,
+      tabGroups: [
+        {
+          domain: 'test.com',
+          tabs: [
+            { id: 1, windowId: 1, title: 'Test', url: 'https://test.com' },
+          ],
+        },
+        {
+          domain: 'other.com',
+          tabs: [
+            { id: 2, windowId: 1, title: 'Other', url: 'https://other.com' },
+          ],
+        },
+      ],
+      closeTab: vi.fn(),
+      closeGroup: vi.fn(),
+      switchToTab: vi.fn(),
+    });
+
+    const { container } = render(<TabManager />);
+    const searchInput = screen.getByPlaceholderText('搜索域名或选择标签...');
+
+    fireEvent.click(searchInput);
+    fireEvent.click(screen.getByRole('button', { name: /test\.com/ }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Focus' })[0]);
+    expect(screen.queryByText('Other')).toBeNull();
+
+    const searchArea = container.querySelector('.relative.z-30') as HTMLElement;
+    const selectedChipButtons = searchArea.querySelectorAll(
+      '.flex-shrink-0 button',
+    );
+    fireEvent.click(selectedChipButtons[0]);
+    expect(screen.queryByText('Other')).toBeNull();
+
+    fireEvent.click(selectedChipButtons[1]);
+    expect(screen.getByText('Other')).toBeInTheDocument();
+
+    expect(screen.getByText('域名筛选')).toBeInTheDocument();
+    fireEvent.mouseDown(searchArea);
+    expect(screen.getByText('域名筛选')).toBeInTheDocument();
+    fireEvent.mouseDown(document.body);
+    expect(screen.queryByText('域名筛选')).toBeNull();
+  });
+
+  it('should handle search panel wheel areas and reset filter groups', () => {
+    (useTags as Mock).mockReturnValue({
+      tagsMap: {},
+      domainTagsMap: {
+        'test.com': [createDomainTag('focus', 'Focus')],
+      },
+      addTag: vi.fn(),
+      removeTag: vi.fn(),
+      addDomainTag: vi.fn(),
+      removeDomainTag: vi.fn(),
+      updateDomainTag: vi.fn(),
+      addDomainTagToMany: vi.fn(),
+      allUniqueTags: ['Focus'],
+    });
+    (useTabs as Mock).mockReturnValue({
+      loading: false,
+      tabGroups: [
+        {
+          domain: 'test.com',
+          tabs: [
+            { id: 1, windowId: 1, title: 'Test', url: 'https://test.com' },
+          ],
+        },
+        {
+          domain: 'other.com',
+          tabs: [
+            { id: 2, windowId: 1, title: 'Other', url: 'https://other.com' },
+          ],
+        },
+      ],
+      closeTab: vi.fn(),
+      closeGroup: vi.fn(),
+      switchToTab: vi.fn(),
+    });
+
+    const { container } = render(<TabManager />);
+    fireEvent.focus(screen.getByPlaceholderText('搜索域名或选择标签...'));
+    fireEvent.click(screen.getByRole('button', { name: /test\.com/ }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Focus' })[0]);
+    expect(screen.queryByText('Other')).toBeNull();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Focus' })[0]);
+    expect(screen.getByText('Test')).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Focus' })[0]);
+
+    fireEvent.click(screen.getByText('全部域名'));
+    expect(screen.queryByText('Other')).toBeNull();
+    fireEvent.click(screen.getByText('全部标签'));
+    expect(screen.getByText('Other')).toBeInTheDocument();
+
+    const wheelAreas = container.querySelectorAll('.max-h-36.overflow-y-auto');
+    fireEvent.wheel(wheelAreas[0], { deltaY: 40 });
+    fireEvent.wheel(wheelAreas[1], { deltaY: 40 });
+  });
+
+  it('should restore valid cached filters and ignore invalid cache values', () => {
+    localStorage.setItem('tabManager_selectedDomains', '["test.com"]');
+    localStorage.setItem('tabManager_selectedTags', '["Focus"]');
+    (useTags as Mock).mockReturnValue({
+      tagsMap: {},
+      domainTagsMap: {
+        'test.com': [createDomainTag('focus', 'Focus')],
+        'other.com': [createDomainTag('work', 'Work')],
+      },
+      addTag: vi.fn(),
+      removeTag: vi.fn(),
+      addDomainTag: vi.fn(),
+      removeDomainTag: vi.fn(),
+      updateDomainTag: vi.fn(),
+      addDomainTagToMany: vi.fn(),
+      allUniqueTags: ['Focus', 'Work'],
+    });
+    (useTabs as Mock).mockReturnValue({
+      loading: false,
+      tabGroups: [
+        {
+          domain: 'test.com',
+          tabs: [
+            { id: 1, windowId: 1, title: 'Test', url: 'https://test.com' },
+          ],
+        },
+        {
+          domain: 'other.com',
+          tabs: [
+            { id: 2, windowId: 1, title: 'Other', url: 'https://other.com' },
+          ],
+        },
+      ],
+      closeTab: vi.fn(),
+      closeGroup: vi.fn(),
+      switchToTab: vi.fn(),
+    });
+
+    const { unmount } = render(<TabManager />);
+    expect(screen.getByText('Test')).toBeInTheDocument();
+    expect(screen.queryByText('Other')).toBeNull();
+    unmount();
+
+    localStorage.setItem('tabManager_selectedDomains', '{');
+    localStorage.setItem('tabManager_selectedTags', '{');
+    render(<TabManager />);
+    expect(screen.getByText('Test')).toBeInTheDocument();
+    expect(screen.getByText('Other')).toBeInTheDocument();
+  });
+
+  it('should show empty states for unmatched search and conflicting filters', () => {
+    (useTags as Mock).mockReturnValue({
+      tagsMap: {},
+      domainTagsMap: {
+        'test.com': [createDomainTag('focus', 'Focus')],
+        'other.com': [createDomainTag('work', 'Work')],
+      },
+      addTag: vi.fn(),
+      removeTag: vi.fn(),
+      addDomainTag: vi.fn(),
+      removeDomainTag: vi.fn(),
+      updateDomainTag: vi.fn(),
+      addDomainTagToMany: vi.fn(),
+      allUniqueTags: ['Focus', 'Work'],
+    });
+    (useTabs as Mock).mockReturnValue({
+      loading: false,
+      tabGroups: [
+        {
+          domain: 'test.com',
+          tabs: [
+            { id: 1, windowId: 1, title: 'Test', url: 'https://test.com' },
+          ],
+        },
+        {
+          domain: 'other.com',
+          tabs: [
+            { id: 2, windowId: 1, title: 'Other', url: 'https://other.com' },
+          ],
+        },
+      ],
+      closeTab: vi.fn(),
+      closeGroup: vi.fn(),
+      switchToTab: vi.fn(),
+    });
+
+    render(<TabManager />);
+
+    const searchInput = screen.getByPlaceholderText('搜索域名或选择标签...');
+    fireEvent.focus(searchInput);
+    fireEvent.change(searchInput, { target: { value: 'missing' } });
+    expect(screen.getByText('没有匹配的域名。')).toBeInTheDocument();
+
+    fireEvent.change(searchInput, { target: { value: '' } });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Focus' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: /other\.com/ }));
+    expect(
+      screen.getByText('当前筛选下没有匹配的标签页，试试切换域名或标签。'),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /other\.com/ }));
+    expect(screen.getByText('Test')).toBeInTheDocument();
+  });
+
+  it('should handle batch select-all, clear, filtered empty state, and list wheel', () => {
+    const mockAddDomainTagToMany = vi.fn();
+    (useTags as Mock).mockReturnValue({
+      tagsMap: {},
+      domainTagsMap: {},
+      addTag: vi.fn(),
+      removeTag: vi.fn(),
+      addDomainTag: vi.fn(),
+      removeDomainTag: vi.fn(),
+      updateDomainTag: vi.fn(),
+      addDomainTagToMany: mockAddDomainTagToMany,
+      allUniqueTags: [],
+    });
+    (useTabs as Mock).mockReturnValue({
+      loading: false,
+      tabGroups: [
+        {
+          domain: 'alpha.com',
+          tabs: [
+            { id: 1, windowId: 1, title: 'Alpha', url: 'https://alpha.com' },
+          ],
+        },
+        {
+          domain: 'beta.com',
+          tabs: [
+            { id: 2, windowId: 1, title: 'Beta', url: 'https://beta.com' },
+          ],
+        },
+      ],
+      closeTab: vi.fn(),
+      closeGroup: vi.fn(),
+      switchToTab: vi.fn(),
+    });
+
+    render(<TabManager />);
+    fireEvent.click(screen.getByRole('button', { name: '批量加标签' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /alpha\.com/i }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /alpha\.com/i }));
+    expect(screen.getByRole('button', { name: '确认添加' })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: '全选当前结果' }));
+    fireEvent.change(screen.getByPlaceholderText('输入标签内容'), {
+      target: { value: 'Batch' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '清空选择' }));
+    expect(screen.getByRole('button', { name: '确认添加' })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: '全选当前结果' }));
+    fireEvent.click(screen.getByRole('button', { name: '确认添加' }));
+    expect(mockAddDomainTagToMany).toHaveBeenCalledWith(
+      ['alpha.com', 'beta.com'],
+      'Batch',
+      undefined,
+      false,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: '批量加标签' }));
+    fireEvent.change(
+      screen.getByPlaceholderText('搜索要批量添加标签的域名...'),
+      {
+        target: { value: 'missing' },
+      },
+    );
+    expect(screen.getByText('没有匹配的域名。')).toBeInTheDocument();
+
+    const batchList = screen
+      .getByText('没有匹配的域名。')
+      .closest('.overflow-y-auto') as HTMLElement;
+    fireEvent.wheel(batchList, { deltaY: 60 });
+  });
+
+  it('should use default tag view callbacks without crashing', () => {
+    (useTags as Mock).mockReturnValue({
+      tagsMap: {},
+      domainTagsMap: {
+        'docs.com': [createDomainTag('work', 'Work', 'BriefcaseBusiness')],
+        'life.com': [createDomainTag('life', 'Life', 'Heart')],
+      },
+      tagDefinitions: [
+        {
+          id: 'work',
+          label: 'Work',
+          iconName: 'BriefcaseBusiness',
+          createdAt: 1,
+          updatedAt: 1,
+        },
+        {
+          id: 'life',
+          label: 'Life',
+          iconName: 'Heart',
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      ],
+      addTag: vi.fn(),
+      removeTag: vi.fn(),
+      addDomainTag: vi.fn(),
+      removeDomainTag: vi.fn(),
+      updateDomainTag: vi.fn(),
+      addDomainTagToMany: vi.fn(),
+      allUniqueTags: ['Work', 'Life'],
+    });
+    (useTabs as Mock).mockReturnValue({
+      loading: false,
+      tabGroups: [
+        {
+          domain: 'docs.com',
+          tabs: [
+            { id: 1, windowId: 1, title: 'Docs', url: 'https://docs.com' },
+          ],
+        },
+        {
+          domain: 'life.com',
+          tabs: [
+            { id: 2, windowId: 1, title: 'Life', url: 'https://life.com' },
+          ],
+        },
+      ],
+      closeTab: vi.fn(),
+      closeGroup: vi.fn(),
+      switchToTab: vi.fn(),
+    });
+
+    render(<TabManager tabsViewMode="tag" />);
+
+    const targetContainer = screen.getByTestId('tag-container-Life');
+    fireEvent.dragOver(targetContainer);
+    fireEvent.dragLeave(targetContainer, { relatedTarget: document.body });
+    fireEvent.drop(targetContainer, {
+      dataTransfer: {
+        getData: vi.fn((type: string) =>
+          type === 'application/domain' ? 'docs.com' : '',
+        ),
+      },
+    });
+
+    fireEvent.click(screen.getByTitle('编辑标签容器 Work'));
+    const renameInput = screen.getByPlaceholderText('修改标签容器');
+    fireEvent.change(renameInput, { target: { value: 'Research' } });
+    fireEvent.keyDown(renameInput, { key: 'Enter', code: 'Enter' });
+
+    fireEvent.click(screen.getByRole('button', { name: '删除标签容器 Life' }));
+    expect(screen.getByTestId('tag-container-Life')).toBeInTheDocument();
+  });
+
+  it('should handle tag view card close, tab switch, close tab, and nested wheel', () => {
+    const mockCloseTab = vi.fn();
+    const mockSwitchToTab = vi.fn();
+    (useTags as Mock).mockReturnValue({
+      tagsMap: {},
+      domainTagsMap: {
+        'docs.com': [createDomainTag('work', 'Work', 'BriefcaseBusiness')],
+      },
+      tagDefinitions: [
+        {
+          id: 'work',
+          label: 'Work',
+          iconName: 'BriefcaseBusiness',
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      ],
+      addTag: vi.fn(),
+      removeTag: vi.fn(),
+      addDomainTag: vi.fn(),
+      removeDomainTag: vi.fn(),
+      updateDomainTag: vi.fn(),
+      addDomainTagToMany: vi.fn(),
+      setDomainPrimaryTag: vi.fn(),
+      renameGlobalTag: vi.fn(),
+      removeGlobalTag: vi.fn(),
+      allUniqueTags: ['Work'],
+    });
+    (useTabs as Mock).mockReturnValue({
+      loading: false,
+      tabGroups: [
+        {
+          domain: 'docs.com',
+          tabs: [
+            { id: 1, windowId: 1, title: 'Docs', url: 'https://docs.com' },
+          ],
+        },
+      ],
+      closeTab: mockCloseTab,
+      closeGroup: vi.fn(),
+      switchToTab: mockSwitchToTab,
+    });
+
+    render(<TabManager tabsViewMode="tag" />);
+
+    fireEvent.click(screen.getByText('Docs'));
+    expect(mockSwitchToTab).toHaveBeenCalledWith(1, 1);
+
+    fireEvent.click(screen.getByTitle('Close tab'));
+    expect(mockCloseTab).toHaveBeenCalledWith(1);
+
+    fireEvent.click(screen.getByTitle('Close all tabs in this group'));
+    expect(
+      screen.getByText('将关闭 docs.com 下的所有标签页，此操作不可撤销。'),
+    ).toBeInTheDocument();
+
+    fireEvent.wheel(screen.getByTestId('domain-card-tab-list'), { deltaY: 30 });
+  });
+
+  it('should ignore horizontal wheel gestures in vertical panels', () => {
+    (useTabs as Mock).mockReturnValue({
+      loading: false,
+      tabGroups: [
+        {
+          domain: 'test.com',
+          tabs: [
+            { id: 1, windowId: 1, title: 'Test', url: 'https://test.com' },
+          ],
+        },
+      ],
+      closeTab: vi.fn(),
+      closeGroup: vi.fn(),
+      switchToTab: vi.fn(),
+    });
+
+    const { container } = render(<TabManager />);
+    const mainContainer = container.querySelector(
+      '.min-h-0.flex-1.overflow-y-auto',
+    ) as HTMLElement;
+    const scrollByMock = vi.fn();
+    mainContainer.scrollBy = scrollByMock;
+
+    fireEvent.wheel(mainContainer, { deltaX: 160, deltaY: 10 });
+
+    expect(scrollByMock).not.toHaveBeenCalled();
+  });
+
+  it('should damp scroll locally at a boundary when page forwarding is disabled', () => {
+    (useTabs as Mock).mockReturnValue({
+      loading: false,
+      tabGroups: [
+        {
+          domain: 'test.com',
+          tabs: [
+            { id: 1, windowId: 1, title: 'Test', url: 'https://test.com' },
+          ],
+        },
+      ],
+      closeTab: vi.fn(),
+      closeGroup: vi.fn(),
+      switchToTab: vi.fn(),
+    });
+
+    const { container } = render(
+      <TabManager scrollThroughNestedPanels={false} />,
+    );
+
+    let animationFrameCallback: FrameRequestCallback | null = null;
+    const requestAnimationFrameSpy = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((cb) => {
+        animationFrameCallback = cb;
+        return 1;
+      });
+
+    const mainContainer = container.querySelector(
+      '.min-h-0.flex-1.overflow-y-auto',
+    ) as HTMLElement;
+    const scrollByMock = vi.fn();
+    mainContainer.scrollBy = scrollByMock;
+    Object.defineProperty(mainContainer, 'scrollHeight', {
+      configurable: true,
+      value: 1000,
+    });
+    Object.defineProperty(mainContainer, 'clientHeight', {
+      configurable: true,
+      value: 500,
+    });
+    Object.defineProperty(mainContainer, 'scrollTop', {
+      configurable: true,
+      value: 0,
+    });
+
+    fireEvent.wheel(mainContainer, { deltaY: -100 });
+    (animationFrameCallback as unknown as FrameRequestCallback)(0);
+
+    expect(scrollByMock).toHaveBeenCalledWith({
+      top: -6.6000000000000005,
+      behavior: 'auto',
+    });
+
+    requestAnimationFrameSpy.mockRestore();
+  });
+
+  it('should keep tag container feedback when dragging within the same container', () => {
+    (useTags as Mock).mockReturnValue({
+      tagsMap: {},
+      domainTagsMap: {
+        'docs.com': [createDomainTag('work', 'Work', 'BriefcaseBusiness')],
+        'life.com': [createDomainTag('life', 'Life', 'Heart')],
+      },
+      tagDefinitions: [
+        {
+          id: 'work',
+          label: 'Work',
+          iconName: 'BriefcaseBusiness',
+          createdAt: 1,
+          updatedAt: 1,
+        },
+        {
+          id: 'life',
+          label: 'Life',
+          iconName: 'Heart',
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      ],
+      addTag: vi.fn(),
+      removeTag: vi.fn(),
+      addDomainTag: vi.fn(),
+      removeDomainTag: vi.fn(),
+      updateDomainTag: vi.fn(),
+      addDomainTagToMany: vi.fn(),
+      setDomainPrimaryTag: vi.fn(),
+      renameGlobalTag: vi.fn(),
+      allUniqueTags: ['Work', 'Life'],
+    });
+    (useTabs as Mock).mockReturnValue({
+      loading: false,
+      tabGroups: [
+        {
+          domain: 'docs.com',
+          tabs: [
+            { id: 1, windowId: 1, title: 'Docs', url: 'https://docs.com' },
+          ],
+        },
+        {
+          domain: 'life.com',
+          tabs: [
+            { id: 2, windowId: 1, title: 'Life', url: 'https://life.com' },
+          ],
+        },
+      ],
+      closeTab: vi.fn(),
+      closeGroup: vi.fn(),
+      switchToTab: vi.fn(),
+    });
+
+    render(<TabManager tabsViewMode="tag" />);
+
+    const targetContainer = screen.getByTestId('tag-container-Life');
+    const nestedElement = targetContainer.querySelector('div') as HTMLElement;
+    const dragLeaveEvent = createEvent.dragLeave(targetContainer);
+    Object.defineProperty(dragLeaveEvent, 'relatedTarget', {
+      value: nestedElement,
+    });
+
+    fireEvent.dragEnter(targetContainer);
+    fireEvent(targetContainer, dragLeaveEvent);
+
+    expect(targetContainer).toHaveClass('border-white/30');
   });
 });
