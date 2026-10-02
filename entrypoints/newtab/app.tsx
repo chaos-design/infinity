@@ -91,6 +91,8 @@ const PAGES = [
   { id: 1, key: 'tabs', label: 'Open Tabs' },
 ];
 
+const FALLBACK_PAGE_KEY = PAGES[0]?.key ?? 'home';
+
 export default function App() {
   const { settings, updateSettings, loading } = useSettings();
   const [systemPrefersDark, setSystemPrefersDark] = useState(() => {
@@ -189,7 +191,7 @@ export default function App() {
         (root.scrollTop + root.clientHeight / 2) / root.clientHeight,
       );
       const targetIndex = Math.max(0, Math.min(pageIndex, PAGES.length - 1));
-      const nextPage = PAGES[targetIndex]?.key || PAGES[0].key;
+      const nextPage = PAGES[targetIndex]?.key ?? FALLBACK_PAGE_KEY;
 
       setActivePage((currentPage) =>
         currentPage === nextPage ? currentPage : nextPage,

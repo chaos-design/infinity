@@ -73,6 +73,12 @@ function areTabGroupsEqual(left: TabGroup[], right: TabGroup[]): boolean {
 
   return left.every((leftGroup, groupIndex) => {
     const rightGroup = right[groupIndex];
+    // Unreachable while the length check above holds, but the type system
+    // cannot narrow indexed access, and an early return keeps it honest.
+    if (!rightGroup) {
+      return false;
+    }
+
     if (
       leftGroup.domain !== rightGroup.domain ||
       leftGroup.tabs.length !== rightGroup.tabs.length
@@ -82,6 +88,10 @@ function areTabGroupsEqual(left: TabGroup[], right: TabGroup[]): boolean {
 
     return leftGroup.tabs.every((leftTab, tabIndex) => {
       const rightTab = rightGroup.tabs[tabIndex];
+      if (!rightTab) {
+        return false;
+      }
+
       return (
         leftTab.id === rightTab.id &&
         leftTab.windowId === rightTab.windowId &&

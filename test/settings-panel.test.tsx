@@ -119,7 +119,7 @@ describe('SettingsPanel', () => {
     });
     const compactColorPreset = screen.getAllByRole('button', {
       name: '选择预设颜色 #8b5cf6',
-    })[0];
+    })[0]!;
     fireEvent.click(compactColorPreset);
 
     expect(compactColorPreset.className).toContain('h-5 w-5');
@@ -206,7 +206,7 @@ describe('SettingsPanel', () => {
     ]);
     expect(presetGrid).toHaveClass('grid-cols-6');
 
-    fireEvent.click(presets[presetNames.indexOf('Nebula')!]);
+    fireEvent.click(presets[presetNames.indexOf('Nebula')!]!);
 
     expect(screen.getByTestId('gradient-preview-stop-1')).toHaveTextContent(
       '1Origin',
@@ -256,8 +256,8 @@ describe('SettingsPanel', () => {
     });
 
     expect(solidColorPresets.length).toBeGreaterThan(20);
-    expect(solidColorPresets[0].className).toContain('h-5 w-5');
-    expect(solidColorPresets[0].parentElement?.className).toContain(
+    expect(solidColorPresets[0]!.className).toContain('h-5 w-5');
+    expect(solidColorPresets[0]!.parentElement?.className).toContain(
       'flex-wrap',
     );
     expect(backgroundColorTrigger).toHaveTextContent('#0f172a');

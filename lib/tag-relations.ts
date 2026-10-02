@@ -65,6 +65,12 @@ export function buildTagContainersFromDomainData(
     }
 
     const primaryTag = validTags[0];
+    // The empty case above already continues, so this only exists to narrow the
+    // indexed access for the type system.
+    if (!primaryTag) {
+      continue;
+    }
+
     const container = containerMap.get(primaryTag.label) ?? {
       id: primaryTag.id || primaryTag.label,
       label: primaryTag.label,

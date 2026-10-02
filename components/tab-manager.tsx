@@ -333,7 +333,11 @@ export function TabManager({
       () => [],
     );
     filteredGroups.forEach((group, index) => {
-      cols[index % columnCount].push(group);
+      const column = cols[index % columnCount];
+      if (!column) {
+        return;
+      }
+      column.push(group);
     });
     return cols;
   }, [filteredGroups, columnCount]);

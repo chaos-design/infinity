@@ -27,12 +27,12 @@ describe('useTags', () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(result.current.domainTagsMap['example.com']).toHaveLength(1);
-    expect(result.current.domainTagsMap['example.com'][0]).toMatchObject({
+    expect(result.current.domainTagsMap['example.com']![0]).toMatchObject({
       label: 'Focus',
       iconName: 'Star',
     });
 
-    const focusTagId = result.current.domainTagsMap['example.com'][0].id;
+    const focusTagId = result.current.domainTagsMap['example.com']![0]!.id;
 
     act(() => {
       result.current.updateDomainTag(
@@ -43,7 +43,7 @@ describe('useTags', () => {
       );
     });
 
-    expect(result.current.domainTagsMap['example.com'][0]).toMatchObject({
+    expect(result.current.domainTagsMap['example.com']![0]).toMatchObject({
       id: focusTagId,
       label: 'Deep Focus',
       iconName: 'Heart',
@@ -58,7 +58,7 @@ describe('useTags', () => {
     });
 
     expect(
-      result.current.domainTagsMap['example.com'].some(
+      result.current.domainTagsMap['example.com']!.some(
         (tag) => tag.label === 'Pinned' && tag.iconName === 'Flag',
       ),
     ).toBe(true);
@@ -82,9 +82,9 @@ describe('useTags', () => {
       result.current.setDomainPrimaryTag('example.com', 'Read');
     });
 
-    expect(result.current.domainTagsMap['example.com'][0].label).toBe('Read');
+    expect(result.current.domainTagsMap['example.com']![0]!.label).toBe('Read');
     expect(
-      result.current.domainTagsMap['example.com'].some(
+      result.current.domainTagsMap['example.com']!.some(
         (tag) => tag.label === 'Focus',
       ),
     ).toBe(true);
@@ -93,7 +93,7 @@ describe('useTags', () => {
       result.current.renameGlobalTag('Read', 'Research', 'Lightbulb');
     });
 
-    expect(result.current.domainTagsMap['example.com'][0]).toMatchObject({
+    expect(result.current.domainTagsMap['example.com']![0]).toMatchObject({
       label: 'Research',
       iconName: 'Lightbulb',
     });
@@ -125,12 +125,12 @@ describe('useTags', () => {
       result.current.addDomainTag('empty.com', 'Work', 'BriefcaseBusiness');
     });
 
-    expect(result.current.domainTagsMap['empty.com'][0]).toMatchObject({
+    expect(result.current.domainTagsMap['empty.com']![0]).toMatchObject({
       label: 'Study',
       iconName: 'BookOpen',
     });
     expect(
-      result.current.domainTagsMap['empty.com'].some(
+      result.current.domainTagsMap['empty.com']!.some(
         (tag) => tag.label === 'Work' && tag.iconName === 'BriefcaseBusiness',
       ),
     ).toBe(true);
@@ -144,26 +144,26 @@ describe('useTags', () => {
       );
     });
 
-    expect(result.current.domainTagsMap['example.com'][0]).toMatchObject({
+    expect(result.current.domainTagsMap['example.com']![0]).toMatchObject({
       label: 'Pinned',
       iconName: 'Flag',
     });
     expect(
-      result.current.domainTagsMap['example.com'].some(
+      result.current.domainTagsMap['example.com']!.some(
         (tag) => tag.label === 'Focus',
       ),
     ).toBe(true);
-    expect(result.current.domainTagsMap['empty.com'][0]).toMatchObject({
+    expect(result.current.domainTagsMap['empty.com']![0]).toMatchObject({
       label: 'Pinned',
       iconName: 'Flag',
     });
     expect(
-      result.current.domainTagsMap['empty.com'].some(
+      result.current.domainTagsMap['empty.com']!.some(
         (tag) => tag.label === 'Study',
       ),
     ).toBe(true);
     expect(
-      result.current.domainTagsMap['empty.com'].some(
+      result.current.domainTagsMap['empty.com']!.some(
         (tag) => tag.label === 'Work',
       ),
     ).toBe(true);
@@ -204,11 +204,11 @@ describe('useTags', () => {
       );
     });
 
-    expect(result.current.domainTagsMap['example.com'][0].label).toBe(
+    expect(result.current.domainTagsMap['example.com']![0]!.label).toBe(
       'Planning',
     );
     expect(
-      result.current.domainTagsMap['secondary.com'].some(
+      result.current.domainTagsMap['secondary.com']!.some(
         (tag) => tag.label === 'Planning',
       ),
     ).toBe(true);

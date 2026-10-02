@@ -8,12 +8,12 @@ window.addEventListener('error', (e) => {
 });
 
 class ErrorBoundary extends React.Component {
-  state = { hasError: false, error: null };
+  override state = { hasError: false, error: null };
   static getDerivedStateFromError(error: any) {
     return { hasError: true, error };
   }
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       return (
         <div

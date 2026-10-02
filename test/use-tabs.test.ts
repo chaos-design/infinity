@@ -48,10 +48,10 @@ describe('useTabs', () => {
     expect(result.current.tabGroups).toHaveLength(2);
 
     // Ordered by domain ascending
-    expect(result.current.tabGroups[0].domain).toBe('example.com');
-    expect(result.current.tabGroups[0].tabs).toHaveLength(2);
-    expect(result.current.tabGroups[1].domain).toBe('test.com');
-    expect(result.current.tabGroups[1].tabs).toHaveLength(1);
+    expect(result.current.tabGroups[0]!.domain).toBe('example.com');
+    expect(result.current.tabGroups[0]!.tabs).toHaveLength(2);
+    expect(result.current.tabGroups[1]!.domain).toBe('test.com');
+    expect(result.current.tabGroups[1]!.tabs).toHaveLength(1);
   });
 
   it('should handle invalid urls or chrome/edge pages (boundary case)', async () => {
@@ -329,7 +329,7 @@ describe('useTabs', () => {
       await result.current.refreshTabs();
     });
 
-    expect(result.current.tabGroups[0].domain).toBe('changed.com');
+    expect(result.current.tabGroups[0]!.domain).toBe('changed.com');
   });
 
   it('should queue a refresh when a fetch is already running', async () => {
@@ -370,7 +370,7 @@ describe('useTabs', () => {
     });
 
     expect(global.chrome.tabs.query).toHaveBeenCalledTimes(2);
-    expect(result.current.tabGroups[0].domain).toBe('queued.com');
+    expect(result.current.tabGroups[0]!.domain).toBe('queued.com');
   });
 
   it('should avoid setting state after unmount while a fetch is pending', async () => {

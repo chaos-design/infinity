@@ -360,7 +360,7 @@ describe('TabManager', () => {
 
     // Tag filtering
     fireEvent.focus(screen.getByPlaceholderText('搜索域名或选择标签...'));
-    const tagFilterBtn = screen.getAllByRole('button', { name: 'Focus' })[0];
+    const tagFilterBtn = screen.getAllByRole('button', { name: 'Focus' })[0]!;
     fireEvent.click(tagFilterBtn);
 
     const allFilterBtn = screen.getByText('全部标签', { selector: 'button' });
@@ -534,7 +534,7 @@ describe('TabManager', () => {
     expect(screen.queryByRole('button', { name: '工作' })).toBeNull();
     expect(mockAddDomainTag).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getAllByTitle('Close tab')[0]);
+    fireEvent.click(screen.getAllByTitle('Close tab')[0]!);
     expect(mockCloseTab).toHaveBeenCalledWith(1);
   });
 
@@ -1983,17 +1983,17 @@ describe('TabManager', () => {
 
     fireEvent.click(searchInput);
     fireEvent.click(screen.getByRole('button', { name: /test\.com/ }));
-    fireEvent.click(screen.getAllByRole('button', { name: 'Focus' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Focus' })[0]!);
     expect(screen.queryByText('Other')).toBeNull();
 
     const searchArea = container.querySelector('.relative.z-30') as HTMLElement;
     const selectedChipButtons = searchArea.querySelectorAll(
       '.flex-shrink-0 button',
     );
-    fireEvent.click(selectedChipButtons[0]);
+    fireEvent.click(selectedChipButtons[0]!);
     expect(screen.queryByText('Other')).toBeNull();
 
-    fireEvent.click(selectedChipButtons[1]);
+    fireEvent.click(selectedChipButtons[1]!);
     expect(screen.getByText('Other')).toBeInTheDocument();
 
     expect(screen.getByText('域名筛选')).toBeInTheDocument();
@@ -2041,11 +2041,11 @@ describe('TabManager', () => {
     const { container } = render(<TabManager />);
     fireEvent.focus(screen.getByPlaceholderText('搜索域名或选择标签...'));
     fireEvent.click(screen.getByRole('button', { name: /test\.com/ }));
-    fireEvent.click(screen.getAllByRole('button', { name: 'Focus' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Focus' })[0]!);
     expect(screen.queryByText('Other')).toBeNull();
-    fireEvent.click(screen.getAllByRole('button', { name: 'Focus' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Focus' })[0]!);
     expect(screen.getByText('Test')).toBeInTheDocument();
-    fireEvent.click(screen.getAllByRole('button', { name: 'Focus' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Focus' })[0]!);
 
     fireEvent.click(screen.getByText('全部域名'));
     expect(screen.queryByText('Other')).toBeNull();
@@ -2053,8 +2053,8 @@ describe('TabManager', () => {
     expect(screen.getByText('Other')).toBeInTheDocument();
 
     const wheelAreas = container.querySelectorAll('.max-h-36.overflow-y-auto');
-    fireEvent.wheel(wheelAreas[0], { deltaY: 40 });
-    fireEvent.wheel(wheelAreas[1], { deltaY: 40 });
+    fireEvent.wheel(wheelAreas[0]!, { deltaY: 40 });
+    fireEvent.wheel(wheelAreas[1]!, { deltaY: 40 });
   });
 
   it('should restore valid cached filters and ignore invalid cache values', () => {
@@ -2151,7 +2151,7 @@ describe('TabManager', () => {
     expect(screen.getByText('没有匹配的域名。')).toBeInTheDocument();
 
     fireEvent.change(searchInput, { target: { value: '' } });
-    fireEvent.click(screen.getAllByRole('button', { name: 'Focus' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Focus' })[0]!);
     fireEvent.click(screen.getByRole('button', { name: /other\.com/ }));
     expect(
       screen.getByText('当前筛选下没有匹配的标签页，试试切换域名或标签。'),
@@ -2230,7 +2230,9 @@ describe('TabManager', () => {
       .getByText('没有匹配的域名。')
       .closest('.overflow-y-auto') as HTMLElement;
     fireEvent.wheel(batchList, { deltaY: 60 });
-  });
+    // Renders the manager four times and drives 17 document-wide queries, so
+    // it needs more than the default budget.
+  }, 10000);
 
   it('should use default tag view callbacks without crashing', () => {
     (useTags as Mock).mockReturnValue({

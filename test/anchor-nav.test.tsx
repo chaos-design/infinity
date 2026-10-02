@@ -87,7 +87,7 @@ describe('AnchorNav', () => {
 
     await waitFor(() => {
       const tooltips = screen.getAllByRole('tooltip', { hidden: true });
-      const currentTooltip = tooltips[tooltips.length - 1];
+      const currentTooltip = tooltips[tooltips.length - 1]!;
       expect(within(currentTooltip).getByText('02')).toBeInTheDocument();
       expect(
         within(currentTooltip).getAllByText('标签页').length,

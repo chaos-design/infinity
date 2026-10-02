@@ -27,7 +27,7 @@ describe('tag storage helpers', () => {
       },
     );
 
-    expect(state.domainTagsMap['example.com'][0]).toMatchObject({
+    expect(state.domainTagsMap['example.com']![0]).toMatchObject({
       label: 'Focus',
       iconName: 'Star',
     });
@@ -49,8 +49,8 @@ describe('tag storage helpers', () => {
 
     expect(result.didChange).toBe(true);
     expect(result.normalizedMap['bad.com']).toHaveLength(1);
-    expect(result.normalizedMap['bad.com'][0].label).toBe('Focus');
-    expect(result.normalizedMap['icon.com'][0]).toMatchObject({
+    expect(result.normalizedMap['bad.com']![0]!.label).toBe('Focus');
+    expect(result.normalizedMap['icon.com']![0]).toMatchObject({
       label: 'Icon',
       iconName: 'Heart',
     });
@@ -149,7 +149,7 @@ describe('tag storage helpers', () => {
       'Read',
     );
 
-    expect(nextMap['example.com'].map((tag) => tag.label)).toEqual([
+    expect(nextMap['example.com']!.map((tag) => tag.label)).toEqual([
       'Read',
       'Work',
     ]);
@@ -173,7 +173,7 @@ describe('tag storage helpers', () => {
       expect.objectContaining({ label: 'Focus', iconName: 'Star' }),
       expect.objectContaining({ label: 'Life' }),
     ]);
-    expect(nextMap['b.com'][0]).toMatchObject({
+    expect(nextMap['b.com']![0]).toMatchObject({
       label: 'Focus',
       iconName: 'Star',
     });
@@ -214,7 +214,7 @@ describe('tag storage helpers', () => {
       ['tagged.com', 'empty.com', ' '],
     );
 
-    expect(nextMap['tagged.com'][0].label).toBe('Work');
+    expect(nextMap['tagged.com']![0]!.label).toBe('Work');
     expect(nextMap['empty.com']).toEqual([]);
   });
 });

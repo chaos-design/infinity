@@ -107,8 +107,8 @@ describe('useSettings tabs view mode', () => {
 
     await waitFor(() => expect(result.current.loading).toBe(false));
     const currentSettings = result.current.settings;
-    const listener = (chrome.storage.onChanged.addListener as Mock).mock
-      .calls[0][0];
+    const listener = (chrome.storage.onChanged!.addListener as Mock).mock
+      .calls[0]![0];
 
     act(() => {
       listener(
