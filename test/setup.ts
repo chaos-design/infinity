@@ -1,4 +1,6 @@
-import '@testing-library/jest-dom';
+// The /vitest entry point registers the matchers against Vitest's `expect`.
+// The package root targets Jest's expect and leaves the matchers untyped here.
+import '@testing-library/jest-dom/vitest';
 import { vi } from 'vitest';
 
 const localStorageStore: Record<string, string> = {};
