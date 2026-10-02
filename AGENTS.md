@@ -18,7 +18,7 @@
 | 构建 | Vite | `^8.3.2` | 由 WXT 调度，不直接配置 rollup/webpack |
 | 语言 | TypeScript | `^7.0.2` | `tsc --noEmit` 严格模式（tsgo）。TS7 不再自动引入 `node_modules/@types` 的全局声明，`tsconfig.json` 必须显式写 `types: ["chrome"]`，否则 `chrome` 全局命名空间丢失 |
 | 框架 | React | `^19.3` | 仅函数组件 + Hooks，禁止 class 组件 |
-| 样式 | Tailwind CSS 4 + Emotion + Styled Components | `^4.3.3` | **CSS-first**：入口是 `assets/tailwind.css`，配置走 `@config` + `@theme inline` + `@custom-variant`。shadcn 语义色必须写在 `@theme inline` 里；只放 JS config 会让颜色工具类静默消失 |
+| 样式 | Tailwind CSS 4 + Emotion + Styled Components | `^4.3.3` | **CSS-first**：入口是 `assets/tailwind.css`，配置走 `@plugin` + `@config` + `@theme inline` + `@custom-variant`。shadcn 语义色必须写在 `@theme inline` 里；只放 JS config 会让颜色工具类静默消失 |
 | UI 基础 | Radix UI + shadcn/ui 风格 | — | 自有组件位于 `components/ui` |
 | 图标 | `lucide-react` | `^1.49` | 全站统一图标库 |
 | 反馈 | `sonner` | `^2.0.8` | 全局 toast |
@@ -28,6 +28,8 @@
 | 运行时 | Node | `22.12+`，由 `package.json#engines` 约束 | 与 WXT 0.20+ 保持兼容 |
 
 > **AI 修改依赖前必须先确认**：是否触发 vite / wxt / vitest 的 peer 锁定；改动后 `pnpm run deps:install` 必须通过。若 GitHub Actions 报 lockfile policy 错误，先执行 `pnpm clean --lockfile` 后重新安装并检查 `pnpm-lock.yaml`，不要通过 `onlyBuiltDependencies` / `overrides` 绕过策略。
+
+> **样式缺失是静默的**：`pnpm build` 不会因为某个类没有对应规则而失败。改完 Tailwind 配置后必须实际检查产物 CSS——先 grep 类名是否存在，再确认规则内容正确，最后核对 `@apply` 的内联结果（`@apply` 不会生成独立类，而是内联进选择器）。仅凭 build 成功判断样式可用是不可靠的。
 
 ## 3. 目录结构（重点路径）
 
@@ -143,7 +145,7 @@ pnpm release:auto      # 自动 patch bump + tag + push
 1. ❌ 修改全局 git config / push --force 到 main / 重写历史。
 2. ❌ 新建 README / 设计文档 / 脚手架说明等文档，除非用户显式要求。
 3. ❌ 引入 ESLint / Prettier / Webpack / Rollup（项目已锁定 Biome + Vite/Rolldown）。
-4. ❌ 添加重型依赖前未确认体积与必要性（当前产物 ~700 KB，其中 CSS ~76 KB，需保持单 chunk 友好）。
+4. ❌ 添加重型依赖前未确认体积与必要性（当前产物 ~703 KB，其中 CSS ~79 KB，需保持单 chunk 友好）。
 5. ❌ 在 hooks 里直接调用 `setState(newObj)` 触发循环渲染（必须深比较）。
 6. ❌ 在 manifest 中新增 `permissions` 而不更新 `PRIVACY.md` 与 README 的"权限与隐私"段。
 7. ❌ 提交 `.output/`、`coverage/`、`node_modules/`、本地测试快照。

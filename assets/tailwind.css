@@ -1,4 +1,10 @@
 @import 'tailwindcss';
+
+/* Radix components drive enter/exit with `data-[state=closed]:animate-out`.
+   tw-animate-css was tried first and dropped: its `@theme inline` based
+   --animate-* mapping does not register the utility when it only ever appears
+   behind a variant, so every exit animation silently emitted no rule. */
+@plugin 'tailwindcss-animate';
 @config '../tailwind.config.js';
 
 /* Tailwind 4 dropped the `darkMode` config key; class-based dark mode is

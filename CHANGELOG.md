@@ -43,3 +43,4 @@ First release.
 - Upgraded WXT to 0.21, which enables `noUncheckedIndexedAccess`. Group comparison, tag container building and masonry column assignment now guard against a missing element instead of assuming one, and the error boundary declares `override`.
 - Upgraded TypeScript to 7.0 (tsgo). It no longer pulls ambient declarations from `node_modules/@types` automatically, so `tsconfig.json` now lists `chrome` explicitly.
 - Migrated Tailwind CSS to v4. PostCSS runs `@tailwindcss/postcss`, autoprefixer is no longer needed, and the shadcn palette moved from `theme.extend.colors` into `@theme inline` so the colour utilities keep resolving against the runtime CSS variables.
+- Restored the missing enter/exit animations on the drawer, dialog, tooltip, select and anchor overlays. They referenced `animate-in` / `fade-in` / `zoom-in` / `slide-in-from-*` but no animation plugin had ever been installed, so 38 animation classes shipped with no CSS rule at all.
