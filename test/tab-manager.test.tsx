@@ -2230,9 +2230,7 @@ describe('TabManager', () => {
       .getByText('没有匹配的域名。')
       .closest('.overflow-y-auto') as HTMLElement;
     fireEvent.wheel(batchList, { deltaY: 60 });
-    // Renders the manager four times and drives 17 document-wide queries, so
-    // it needs more than the default budget.
-  }, 10000);
+  });
 
   it('should use default tag view callbacks without crashing', () => {
     (useTags as Mock).mockReturnValue({

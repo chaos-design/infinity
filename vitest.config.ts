@@ -7,6 +7,11 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./test/setup.ts'],
+    // Several specs deliberately render a component several times in one case
+    // to cover a full interaction arc. jsdom plus testing-library cannot finish
+    // those inside the 5s default. Assertion failures still fail immediately;
+    // this only widens the budget for slow-but-correct specs.
+    testTimeout: 10000,
     coverage: {
       provider: 'v8',
       include: ['hooks/use-tabs.ts', 'components/tab-manager.tsx'],
