@@ -14,11 +14,11 @@
 
 | 类别 | 选型 | 版本 | 备注 |
 | --- | --- | --- | --- |
-| 扩展框架 | [WXT](https://wxt.dev) | `^0.20.27` | manifest、entrypoints、热更新均由 WXT 接管。**不要升到 0.21+**：其 `.wxt/tsconfig.json` 启用了 `noUncheckedIndexedAccess`，会在生产代码里触发 76+ 处类型错误 |
+| 扩展框架 | [WXT](https://wxt.dev) | `^0.21.4` | manifest、entrypoints、热更新均由 WXT 接管。注意其 `.wxt/tsconfig.json` 开启 `noUncheckedIndexedAccess` + `noImplicitOverride`，数组索引与 class 覆写都要显式处理 |
 | 构建 | Vite | `^8.3.2` | 由 WXT 调度，不直接配置 rollup/webpack |
-| 语言 | TypeScript | `^5.9` | `tsc --noEmit` 严格模式。**不要升到 7.x**：tsgo 会引入 76+ 处类型错误且收益仅是编译速度 |
+| 语言 | TypeScript | `^7.0.2` | `tsc --noEmit` 严格模式（tsgo）。TS7 不再自动引入 `node_modules/@types` 的全局声明，`tsconfig.json` 必须显式写 `types: ["chrome"]`，否则 `chrome` 全局命名空间丢失 |
 | 框架 | React | `^19.3` | 仅函数组件 + Hooks，禁止 class 组件 |
-| 样式 | Tailwind CSS 3 + Emotion + Styled Components | `^3.4.19` | 优先 Tailwind utility，复杂动效用 emotion / styled。**不要升到 4.x**：v4 是 CSS-first 范式转变，需要重写 `postcss.config.js` 并做视觉回归，不是单纯升级 |
+| 样式 | Tailwind CSS 4 + Emotion + Styled Components | `^4.3.3` | **CSS-first**：入口是 `assets/tailwind.css`，配置走 `@config` + `@theme inline` + `@custom-variant`。shadcn 语义色必须写在 `@theme inline` 里；只放 JS config 会让颜色工具类静默消失 |
 | UI 基础 | Radix UI + shadcn/ui 风格 | — | 自有组件位于 `components/ui` |
 | 图标 | `lucide-react` | `^1.49` | 全站统一图标库 |
 | 反馈 | `sonner` | `^2.0.8` | 全局 toast |
@@ -143,7 +143,7 @@ pnpm release:auto      # 自动 patch bump + tag + push
 1. ❌ 修改全局 git config / push --force 到 main / 重写历史。
 2. ❌ 新建 README / 设计文档 / 脚手架说明等文档，除非用户显式要求。
 3. ❌ 引入 ESLint / Prettier / Webpack / Rollup（项目已锁定 Biome + Vite/Rolldown）。
-4. ❌ 添加重型依赖前未确认体积与必要性（当前产物 ~675 KB，需保持单 chunk 友好）。
+4. ❌ 添加重型依赖前未确认体积与必要性（当前产物 ~700 KB，其中 CSS ~76 KB，需保持单 chunk 友好）。
 5. ❌ 在 hooks 里直接调用 `setState(newObj)` 触发循环渲染（必须深比较）。
 6. ❌ 在 manifest 中新增 `permissions` 而不更新 `PRIVACY.md` 与 README 的"权限与隐私"段。
 7. ❌ 提交 `.output/`、`coverage/`、`node_modules/`、本地测试快照。
