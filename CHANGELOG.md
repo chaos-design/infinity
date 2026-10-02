@@ -38,3 +38,6 @@ First release.
 - Added CODEOWNERS guidance for future reviewer ownership.
 - Pinned the release workflow to the pnpm version declared in `package.json` instead of `pnpm@latest`, so the committed lockfile format cannot drift between runs.
 - Scoped the settings panel gradient preset spec to its own grid, reducing it from 4.8s to 0.32s, and extended it to assert all 24 gradient presets.
+- Updated Radix UI, React 19.3, Vite 8.3, styled-components, autoprefixer and Biome 2.5 within their semver ranges.
+- Upgraded the test toolchain across majors: Vitest 5, `@vitest/coverage-v8` 5, jsdom 30, `@testing-library/jest-dom` 7 and `@types/chrome` 0.3. Full suite runs about 30% faster.
+- TypeScript stays on 5.9 and WXT stays on 0.20 for now. Both next-major upgrades fail type checking on the same array-index assumptions across `hooks/` and `lib/`, and fixing them is a refactor rather than a dependency bump.

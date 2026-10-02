@@ -14,16 +14,16 @@
 
 | 类别 | 选型 | 版本 | 备注 |
 | --- | --- | --- | --- |
-| 扩展框架 | [WXT](https://wxt.dev) | `^0.20.26` | manifest、entrypoints、热更新均由 WXT 接管 |
-| 构建 | Vite | `^8.0` | 由 WXT 调度，不直接配置 rollup/webpack |
-| 语言 | TypeScript | `^5.9` | `tsc --noEmit` 严格模式 |
-| 框架 | React | `^19` | 仅函数组件 + Hooks，禁止 class 组件 |
-| 样式 | Tailwind CSS 3 + Emotion + Styled Components | — | 优先 Tailwind utility，复杂动效用 emotion / styled |
+| 扩展框架 | [WXT](https://wxt.dev) | `^0.20.27` | manifest、entrypoints、热更新均由 WXT 接管。**不要升到 0.21+**：其 `.wxt/tsconfig.json` 启用了 `noUncheckedIndexedAccess`，会在生产代码里触发 76+ 处类型错误 |
+| 构建 | Vite | `^8.3.2` | 由 WXT 调度，不直接配置 rollup/webpack |
+| 语言 | TypeScript | `^5.9` | `tsc --noEmit` 严格模式。**不要升到 7.x**：tsgo 会引入 76+ 处类型错误且收益仅是编译速度 |
+| 框架 | React | `^19.3` | 仅函数组件 + Hooks，禁止 class 组件 |
+| 样式 | Tailwind CSS 3 + Emotion + Styled Components | `^3.4.19` | 优先 Tailwind utility，复杂动效用 emotion / styled。**不要升到 4.x**：v4 是 CSS-first 范式转变，需要重写 `postcss.config.js` 并做视觉回归，不是单纯升级 |
 | UI 基础 | Radix UI + shadcn/ui 风格 | — | 自有组件位于 `components/ui` |
-| 图标 | `lucide-react` | `^1.16` | 全站统一图标库 |
-| 反馈 | `sonner` | `^2` | 全局 toast |
-| 测试 | Vitest + @testing-library/react + jsdom | Vitest `^4.1` | 配置见 `vitest.config.ts` |
-| Lint / Format | Biome 2 | `^2.4` | 不引入 ESLint / Prettier |
+| 图标 | `lucide-react` | `^1.49` | 全站统一图标库 |
+| 反馈 | `sonner` | `^2.0.8` | 全局 toast |
+| 测试 | Vitest + @testing-library/react + jsdom | Vitest `^5.0`，jsdom `^30` | 配置见 `vitest.config.ts`。jest-dom v7 必须用 `@testing-library/jest-dom/vitest` 入口 |
+| Lint / Format | Biome 2 | `^2.5.15` | 不引入 ESLint / Prettier。配置 schema 与 CLI 版本必须一致 |
 | 包管理 | pnpm | 使用项目 `pnpm-lock.yaml` 对应版本 | 不在 `package.json` 中锁定 pnpm 版本；本地兼容脚本走 Corepack |
 | 运行时 | Node | `22.12+`，由 `package.json#engines` 约束 | 与 WXT 0.20+ 保持兼容 |
 
@@ -143,7 +143,7 @@ pnpm release:auto      # 自动 patch bump + tag + push
 1. ❌ 修改全局 git config / push --force 到 main / 重写历史。
 2. ❌ 新建 README / 设计文档 / 脚手架说明等文档，除非用户显式要求。
 3. ❌ 引入 ESLint / Prettier / Webpack / Rollup（项目已锁定 Biome + Vite/Rolldown）。
-4. ❌ 添加重型依赖前未确认体积与必要性（当前产物 ~625 KB，需保持单 chunk 友好）。
+4. ❌ 添加重型依赖前未确认体积与必要性（当前产物 ~675 KB，需保持单 chunk 友好）。
 5. ❌ 在 hooks 里直接调用 `setState(newObj)` 触发循环渲染（必须深比较）。
 6. ❌ 在 manifest 中新增 `permissions` 而不更新 `PRIVACY.md` 与 README 的"权限与隐私"段。
 7. ❌ 提交 `.output/`、`coverage/`、`node_modules/`、本地测试快照。
