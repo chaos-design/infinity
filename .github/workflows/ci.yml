@@ -22,16 +22,18 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # The runner ships Node already, so corepack can be enabled before
-      # setup-node runs its pnpm cache lookup.
-      - name: Enable pnpm
-        run: corepack enable
-
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
+
+      # Must come after setup-node: corepack writes its pnpm shim into the
+      # active Node's bin directory, so enabling it first means the shim is
+      # left behind once setup-node switches Node versions. Ordering here also
+      # rules out setup-node's `cache: pnpm`, which runs `pnpm store path`
+      # before pnpm exists.
+      - name: Enable pnpm
+        run: corepack enable
 
       # Same pnpm version source as the release workflow: packageManager in package.json.
       - name: Install Dependencies
